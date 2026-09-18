@@ -26,7 +26,6 @@ float finalBills[MAX_PATIENTS];
 
 int totalPatients = 0;
 
-
 float calculateSurcharge(float baseFee, int urgency) {
     if (urgency == 2) return baseFee * 0.20;
     if (urgency == 3) return baseFee * 0.50;
@@ -85,7 +84,6 @@ void registerPatient() {
         daysAdmitted[totalPatients] = 0;
     }
 
-
     float baseFee = BASE_FEES[assignedSpecialty[totalPatients]];
     float surcharge = calculateSurcharge(baseFee, urgencyLevels[totalPatients]);
     float wardCost = (isAdmitted[totalPatients] == 1) ? (daysAdmitted[totalPatients] * WARD_RATES[assignedWard[totalPatients]]) : 0.0;
@@ -97,19 +95,97 @@ void registerPatient() {
     totalPatients++;
 }
 
+
+void sortPatientsByPriority() {
+    if (totalPatients <= 1) return;
+
+    for (int i = 0; i < totalPatients - 1; i++) {
+        for (int j = 0; j < totalPatients - i - 1; j++) {
+
+            if (urgencyLevels[j] < urgencyLevels[j + 1]) {
+
+                int tempUrgency = urgencyLevels[j];
+                urgencyLevels[j] = urgencyLevels[j + 1];
+                urgencyLevels[j + 1] = tempUrgency;
+
+
+                char tempName[50];
+                strcpy(tempName, patientNames[j]);
+                strcpy(patientNames[j], patientNames[j + 1]);
+                strcpy(patientNames[j + 1], tempName);
+
+
+                int tempAge = patientAges[j];
+                patientAges[j] = patientAges[j + 1];
+                patientAges[j + 1] = tempAge;
+
+
+                int tempSpec = assignedSpecialty[j];
+                assignedSpecialty[j] = assignedSpecialty[j + 1];
+                assignedSpecialty[j + 1] = tempSpec;
+
+
+                int tempAdm = isAdmitted[j];
+                isAdmitted[j] = isAdmitted[j + 1];
+                isAdmitted[j + 1] = tempAdm;
+
+                int tempWard = assignedWard[j];
+                assignedWard[j] = assignedWard[j + 1];
+                assignedWard[j + 1] = tempWard;
+
+                int tempDays = daysAdmitted[j];
+                daysAdmitted[j] = daysAdmitted[j + 1];
+                daysAdmitted[j + 1] = tempDays;
+
+
+                float tempBill = finalBills[j];
+                finalBills[j] = finalBills[j + 1];
+                finalBills[j + 1] = tempBill;
+            }
+        }
+    }
+}
+
+void displaySortedQueue() {
+    if (totalPatients == 0) {
+        printf("\nNo patients registered yet.\n");
+        return;
+    }
+
+    sortPatientsByPriority();
+
+    printf("\n=== PRIORITY SORTED PATIENT QUEUE (Critical Cases First) ===\n");
+    printf("%-20s %-5s %-15s %-22s %-12s\n", "Name", "Age", "Urgency", "Specialty", "Final Bill");
+    printf("------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < totalPatients; i++) {
+        char urgencyStr[15];
+        if (urgencyLevels[i] == 3) strcpy(urgencyStr, "3 (Critical)");
+        else if (urgencyLevels[i] == 2) strcpy(urgencyStr, "2 (Urgent)");
+        else strcpy(urgencyStr, "1 (Normal)");
+
+        printf("%-20s %-5d %-15s %-22s LKR %-10.2f\n",
+               patientNames[i], patientAges[i], urgencyStr,
+               SPECIALTIES[assignedSpecialty[i]], finalBills[i]);
+    }
+}
+
 int main() {
     int choice;
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. Exit\n");
+        printf("2. View Priority Sorted Queue\n");
+        printf("3. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
 
         if (choice == 1) {
             registerPatient();
+        } else if (choice == 2) {
+            displaySortedQueue();
         }
-    } while (choice != 2);
+    } while (choice != 3);
 
     return 0;
 }
