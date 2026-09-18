@@ -10,6 +10,7 @@ const int AVG_TIME[4] = {15, 20, 30, 30};
 
 const char WARDS[4][20] = {"General Ward", "Paediatric Ward", "Surgical Ward", "ICU"};
 const float WARD_RATES[4] = {3000.00, 6000.00, 12000.00, 25000.00};
+const int WARD_CAPACITIES[4] = {20, 10, 10, 5};
 
 int bedOccupancy[4][20] = {0};
 int queueCounts[4] = {0};
@@ -71,11 +72,27 @@ void registerPatient() {
     if (isAdmitted[totalPatients] == 1) {
         printf("\n--- Ward Selection ---\n");
         for (int i = 0; i < 4; i++) {
-            printf("%d. %s (LKR %.2f/day)\n", i + 1, WARDS[i], WARD_RATES[i]);
+            printf("%d. %s (LKR %.2f/day, Cap: %d)\n", i + 1, WARDS[i], WARD_RATES[i], WARD_CAPACITIES[i]);
         }
         printf("Select Ward ID (1-4): ");
         scanf("%d", &assignedWard[totalPatients]);
         assignedWard[totalPatients]--;
+
+
+        int allocatedBed = -1;
+        for (int b = 0; b < WARD_CAPACITIES[assignedWard[totalPatients]]; b++) {
+            if (bedOccupancy[assignedWard[totalPatients]][b] == 0) {
+                bedOccupancy[assignedWard[totalPatients]][b] = 1;
+                allocatedBed = b + 1;
+                break;
+            }
+        }
+
+        if (allocatedBed != -1) {
+            printf("Bed allocated successfully! Bed #%d in %s.\n", allocatedBed, WARDS[assignedWard[totalPatients]]);
+        } else {
+            printf("Warning: Selected Ward is full! Admitted without bed tracking.\n");
+        }
 
         printf("Enter Days Admitted: ");
         scanf("%d", &daysAdmitted[totalPatients]);
@@ -96,77 +113,15 @@ void registerPatient() {
 }
 
 
-void sortPatientsByPriority() {
-    if (totalPatients <= 1) return;
-
-    for (int i = 0; i < totalPatients - 1; i++) {
-        for (int j = 0; j < totalPatients - i - 1; j++) {
-
-            if (urgencyLevels[j] < urgencyLevels[j + 1]) {
-
-                int tempUrgency = urgencyLevels[j];
-                urgencyLevels[j] = urgencyLevels[j + 1];
-                urgencyLevels[j + 1] = tempUrgency;
-
-
-                char tempName[50];
-                strcpy(tempName, patientNames[j]);
-                strcpy(patientNames[j], patientNames[j + 1]);
-                strcpy(patientNames[j + 1], tempName);
-
-
-                int tempAge = patientAges[j];
-                patientAges[j] = patientAges[j + 1];
-                patientAges[j + 1] = tempAge;
-
-
-                int tempSpec = assignedSpecialty[j];
-                assignedSpecialty[j] = assignedSpecialty[j + 1];
-                assignedSpecialty[j + 1] = tempSpec;
-
-
-                int tempAdm = isAdmitted[j];
-                isAdmitted[j] = isAdmitted[j + 1];
-                isAdmitted[j + 1] = tempAdm;
-
-                int tempWard = assignedWard[j];
-                assignedWard[j] = assignedWard[j + 1];
-                assignedWard[j + 1] = tempWard;
-
-                int tempDays = daysAdmitted[j];
-                daysAdmitted[j] = daysAdmitted[j + 1];
-                daysAdmitted[j + 1] = tempDays;
-
-
-                float tempBill = finalBills[j];
-                finalBills[j] = finalBills[j + 1];
-                finalBills[j + 1] = tempBill;
-            }
+void displayBedOccupancy() {
+    printf("\n=== WARD BED OCCUPANCY & CAPACITY REPORT ===\n");
+    for (int w = 0; w < 4; w++) {
+        int occupiedCount = 0;
+        for (int b = 0; b < WARD_CAPACITIES[w]; b++) {
+            if (bedOccupancy[w][b] == 1) occupiedCount++;
         }
-    }
-}
-
-void displaySortedQueue() {
-    if (totalPatients == 0) {
-        printf("\nNo patients registered yet.\n");
-        return;
-    }
-
-    sortPatientsByPriority();
-
-    printf("\n=== PRIORITY SORTED PATIENT QUEUE (Critical Cases First) ===\n");
-    printf("%-20s %-5s %-15s %-22s %-12s\n", "Name", "Age", "Urgency", "Specialty", "Final Bill");
-    printf("------------------------------------------------------------------------\n");
-
-    for (int i = 0; i < totalPatients; i++) {
-        char urgencyStr[15];
-        if (urgencyLevels[i] == 3) strcpy(urgencyStr, "3 (Critical)");
-        else if (urgencyLevels[i] == 2) strcpy(urgencyStr, "2 (Urgent)");
-        else strcpy(urgencyStr, "1 (Normal)");
-
-        printf("%-20s %-5d %-15s %-22s LKR %-10.2f\n",
-               patientNames[i], patientAges[i], urgencyStr,
-               SPECIALTIES[assignedSpecialty[i]], finalBills[i]);
+        float occupancyRate = ((float)occupiedCount / WARD_CAPACITIES[w]) * 100.0;
+        printf("%-18s : Occupied %d/%d Beds (%.1f%% Occupancy)\n", WARDS[w], occupiedCount, WARD_CAPACITIES[w], occupancyRate);
     }
 }
 
@@ -175,7 +130,7 @@ int main() {
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. View Priority Sorted Queue\n");
+        printf("2. View Bed Occupancy Report\n");
         printf("3. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
@@ -183,7 +138,7 @@ int main() {
         if (choice == 1) {
             registerPatient();
         } else if (choice == 2) {
-            displaySortedQueue();
+            displayBedOccupancy();
         }
     } while (choice != 3);
 
