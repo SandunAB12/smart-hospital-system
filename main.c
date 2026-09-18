@@ -22,13 +22,9 @@ float finalBills[MAX_PATIENTS];
 
 int totalPatients = 0;
 
-
 void saveBedStatusToFile() {
     FILE *fp = fopen("beds_status.txt", "w");
-    if (fp == NULL) {
-        printf("Error opening file for saving bed status.\n");
-        return;
-    }
+    if (fp == NULL) return;
     for (int w = 0; w < 4; w++) {
         for (int b = 0; b < WARD_CAPACITIES[w]; b++) {
             fprintf(fp, "%d ", bedOccupancy[w][b]);
@@ -36,21 +32,32 @@ void saveBedStatusToFile() {
         fprintf(fp, "\n");
     }
     fclose(fp);
-    printf("Bed statuses saved to beds_status.txt successfully.\n");
 }
 
 void loadBedStatusFromFile() {
     FILE *fp = fopen("beds_status.txt", "r");
-    if (fp == NULL) {
-        return; // File doesn't exist yet, proceed with default empty beds
-    }
+    if (fp == NULL) return;
     for (int w = 0; w < 4; w++) {
         for (int b = 0; b < WARD_CAPACITIES[w]; b++) {
             fscanf(fp, "%d", &bedOccupancy[w][b]);
         }
     }
     fclose(fp);
-    printf("Bed statuses loaded from beds_status.txt.\n");
+}
+
+
+void savePatientsToFile() {
+    FILE *fp = fopen("patients.txt", "w");
+    if (fp == NULL) {
+        printf("Error opening patients.txt for writing.\n");
+        return;
+    }
+    for (int i = 0; i < totalPatients; i++) {
+        fprintf(fp, "PAT-%d | Name: %s | Age: %d | Urgency: %d | Bill: LKR %.2f\n",
+                1001 + i, patientNames[i], patientAges[i], urgencyLevels[i], finalBills[i]);
+    }
+    fclose(fp);
+    printf("Patient records exported to patients.txt successfully.\n");
 }
 
 float calculateSurcharge(float baseFee, int urgency) {
@@ -128,6 +135,8 @@ void registerPatient() {
 
     printf("\nPatient Registered Successfully! ID: PAT-%d\n", 1001 + totalPatients);
     totalPatients++;
+
+    savePatientsToFile();
 }
 
 int main() {
@@ -136,7 +145,7 @@ int main() {
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. Save Bed Status to File\n");
+        printf("2. Save Patient Records to File\n");
         printf("3. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
@@ -144,7 +153,7 @@ int main() {
         if (choice == 1) {
             registerPatient();
         } else if (choice == 2) {
-            saveBedStatusToFile();
+            savePatientsToFile();
         }
     } while (choice != 3);
 
