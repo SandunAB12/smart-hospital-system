@@ -21,6 +21,9 @@ int daysAdmitted[MAX_PATIENTS];
 float finalBills[MAX_PATIENTS];
 
 int totalPatients = 0;
+float totalRevenue = 0.0;
+float totalDiscountsGiven = 0.0;
+int urgencyCounts[4] = {0};
 
 void saveBedStatusToFile() {
     FILE *fp = fopen("beds_status.txt", "w");
@@ -45,19 +48,14 @@ void loadBedStatusFromFile() {
     fclose(fp);
 }
 
-
 void savePatientsToFile() {
     FILE *fp = fopen("patients.txt", "w");
-    if (fp == NULL) {
-        printf("Error opening patients.txt for writing.\n");
-        return;
-    }
+    if (fp == NULL) return;
     for (int i = 0; i < totalPatients; i++) {
         fprintf(fp, "PAT-%d | Name: %s | Age: %d | Urgency: %d | Bill: LKR %.2f\n",
                 1001 + i, patientNames[i], patientAges[i], urgencyLevels[i], finalBills[i]);
     }
     fclose(fp);
-    printf("Patient records exported to patients.txt successfully.\n");
 }
 
 float calculateSurcharge(float baseFee, int urgency) {
@@ -84,6 +82,8 @@ void registerPatient() {
     scanf("%d", &patientAges[totalPatients]);
     printf("Select Urgency Level (1 = Normal, 2 = Urgent, 3 = Critical): ");
     scanf("%d", &urgencyLevels[totalPatients]);
+
+    urgencyCounts[urgencyLevels[totalPatients]]++;
 
     printf("\n--- Specialty Selection ---\n");
     for (int i = 0; i < 4; i++) {
@@ -132,11 +132,45 @@ void registerPatient() {
     float discount = calculateDiscount(grossTotal, patientAges[totalPatients]);
 
     finalBills[totalPatients] = grossTotal - discount;
+    totalRevenue += finalBills[totalPatients];
+    totalDiscountsGiven += discount;
 
-    printf("\nPatient Registered Successfully! ID: PAT-%d\n", 1001 + totalPatients);
+    printf("\nPatient Registered Successfully! ID: PAT-%d | Total Bill: LKR %.2f\n", 1001 + totalPatients, finalBills[totalPatients]);
     totalPatients++;
 
     savePatientsToFile();
+}
+
+void displaySummaryReport() {
+    printf("\n=== HOSPITAL PERFORMANCE & ANALYTICS REPORT ===\n");
+    printf("Total Patients Registered : %d\n", totalPatients);
+    printf("  - Critical (Level 3)    : %d\n", urgencyCounts[3]);
+    printf("  - Urgent (Level 2)      : %d\n", urgencyCounts[2]);
+    printf("  - Normal (Level 1)      : %d\n", urgencyCounts[1]);
+    printf("-----------------------------------------------\n");
+    printf("Total Revenue Earned      : LKR %.2f\n", totalRevenue);
+    printf("Total Discounts Granted   : LKR %.2f\n", totalDiscountsGiven);
+    printf("===============================================\n");
+}
+
+void displayHighestPayingPatient() {
+    if (totalPatients == 0) {
+        printf("\nNo patient records available.\n");
+        return;
+    }
+
+    int highestIndex = 0;
+    for (int i = 1; i < totalPatients; i++) {
+        if (finalBills[i] > finalBills[highestIndex]) {
+            highestIndex = i;
+        }
+    }
+
+    printf("\n=== HIGHEST-PAYING PATIENT DETAILS ===\n");
+    printf("Patient Name : %s\n", patientNames[highestIndex]);
+    printf("Age          : %d\n", patientAges[highestIndex]);
+    printf("Total Bill   : LKR %.2f\n", finalBills[highestIndex]);
+    printf("======================================\n");
 }
 
 int main() {
@@ -145,17 +179,35 @@ int main() {
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. Save Patient Records to File\n");
-        printf("3. Exit\n");
+        printf("2. View Performance & Analytics Report\n");
+        printf("3. View Highest-Paying Patient\n");
+        printf("4. Save & Export Data\n");
+        printf("5. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
 
-        if (choice == 1) {
-            registerPatient();
-        } else if (choice == 2) {
-            savePatientsToFile();
+        switch (choice) {
+            case 1:
+                registerPatient();
+                break;
+            case 2:
+                displaySummaryReport();
+                break;
+            case 3:
+                displayHighestPayingPatient();
+                break;
+            case 4:
+                saveBedStatusToFile();
+                savePatientsToFile();
+                printf("All system records saved to file successfully.\n");
+                break;
+            case 5:
+                printf("Exiting System. Thank you!\n");
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
         }
-    } while (choice != 3);
+    } while (choice != 5);
 
     return 0;
 }
