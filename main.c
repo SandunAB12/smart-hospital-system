@@ -22,7 +22,6 @@ float finalBills[MAX_PATIENTS];
 
 int totalPatients = 0;
 
-
 float totalRevenue = 0.0;
 float totalDiscountsGiven = 0.0;
 int urgencyCounts[4] = {0};
@@ -99,7 +98,6 @@ void registerPatient() {
 
     finalBills[totalPatients] = grossTotal - discount;
 
-
     totalRevenue += finalBills[totalPatients];
     totalDiscountsGiven += discount;
 
@@ -108,16 +106,24 @@ void registerPatient() {
 }
 
 
-void displaySummaryReport() {
-    printf("\n=== HOSPITAL PERFORMANCE & ANALYTICS REPORT ===\n");
-    printf("Total Patients Registered : %d\n", totalPatients);
-    printf("  - Critical (Level 3)    : %d\n", urgencyCounts[3]);
-    printf("  - Urgent (Level 2)      : %d\n", urgencyCounts[2]);
-    printf("  - Normal (Level 1)      : %d\n", urgencyCounts[1]);
-    printf("-----------------------------------------------\n");
-    printf("Total Revenue Earned      : LKR %.2f\n", totalRevenue);
-    printf("Total Discounts Granted   : LKR %.2f\n", totalDiscountsGiven);
-    printf("===============================================\n");
+void displayHighestPayingPatient() {
+    if (totalPatients == 0) {
+        printf("\nNo patient records available.\n");
+        return;
+    }
+
+    int highestIndex = 0;
+    for (int i = 1; i < totalPatients; i++) {
+        if (finalBills[i] > finalBills[highestIndex]) {
+            highestIndex = i;
+        }
+    }
+
+    printf("\n=== HIGHEST-PAYING PATIENT DETAILS ===\n");
+    printf("Patient Name : %s\n", patientNames[highestIndex]);
+    printf("Age          : %d\n", patientAges[highestIndex]);
+    printf("Total Bill   : LKR %.2f\n", finalBills[highestIndex]);
+    printf("======================================\n");
 }
 
 int main() {
@@ -125,7 +131,7 @@ int main() {
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. View Summary Report & Analytics\n");
+        printf("2. View Highest-Paying Patient\n");
         printf("3. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
@@ -133,7 +139,7 @@ int main() {
         if (choice == 1) {
             registerPatient();
         } else if (choice == 2) {
-            displaySummaryReport();
+            displayHighestPayingPatient();
         }
     } while (choice != 3);
 
