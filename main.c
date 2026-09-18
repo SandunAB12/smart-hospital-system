@@ -22,9 +22,36 @@ float finalBills[MAX_PATIENTS];
 
 int totalPatients = 0;
 
-float totalRevenue = 0.0;
-float totalDiscountsGiven = 0.0;
-int urgencyCounts[4] = {0};
+
+void saveBedStatusToFile() {
+    FILE *fp = fopen("beds_status.txt", "w");
+    if (fp == NULL) {
+        printf("Error opening file for saving bed status.\n");
+        return;
+    }
+    for (int w = 0; w < 4; w++) {
+        for (int b = 0; b < WARD_CAPACITIES[w]; b++) {
+            fprintf(fp, "%d ", bedOccupancy[w][b]);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+    printf("Bed statuses saved to beds_status.txt successfully.\n");
+}
+
+void loadBedStatusFromFile() {
+    FILE *fp = fopen("beds_status.txt", "r");
+    if (fp == NULL) {
+        return; // File doesn't exist yet, proceed with default empty beds
+    }
+    for (int w = 0; w < 4; w++) {
+        for (int b = 0; b < WARD_CAPACITIES[w]; b++) {
+            fscanf(fp, "%d", &bedOccupancy[w][b]);
+        }
+    }
+    fclose(fp);
+    printf("Bed statuses loaded from beds_status.txt.\n");
+}
 
 float calculateSurcharge(float baseFee, int urgency) {
     if (urgency == 2) return baseFee * 0.20;
@@ -50,8 +77,6 @@ void registerPatient() {
     scanf("%d", &patientAges[totalPatients]);
     printf("Select Urgency Level (1 = Normal, 2 = Urgent, 3 = Critical): ");
     scanf("%d", &urgencyLevels[totalPatients]);
-
-    urgencyCounts[urgencyLevels[totalPatients]]++;
 
     printf("\n--- Specialty Selection ---\n");
     for (int i = 0; i < 4; i++) {
@@ -81,7 +106,10 @@ void registerPatient() {
                 break;
             }
         }
-        if (allocatedBed != -1) printf("Bed allocated successfully! Bed #%d\n", allocatedBed);
+        if (allocatedBed != -1) {
+            printf("Bed allocated successfully! Bed #%d\n", allocatedBed);
+            saveBedStatusToFile();
+        }
 
         printf("Enter Days Admitted: ");
         scanf("%d", &daysAdmitted[totalPatients]);
@@ -98,40 +126,17 @@ void registerPatient() {
 
     finalBills[totalPatients] = grossTotal - discount;
 
-    totalRevenue += finalBills[totalPatients];
-    totalDiscountsGiven += discount;
-
     printf("\nPatient Registered Successfully! ID: PAT-%d\n", 1001 + totalPatients);
     totalPatients++;
 }
 
-
-void displayHighestPayingPatient() {
-    if (totalPatients == 0) {
-        printf("\nNo patient records available.\n");
-        return;
-    }
-
-    int highestIndex = 0;
-    for (int i = 1; i < totalPatients; i++) {
-        if (finalBills[i] > finalBills[highestIndex]) {
-            highestIndex = i;
-        }
-    }
-
-    printf("\n=== HIGHEST-PAYING PATIENT DETAILS ===\n");
-    printf("Patient Name : %s\n", patientNames[highestIndex]);
-    printf("Age          : %d\n", patientAges[highestIndex]);
-    printf("Total Bill   : LKR %.2f\n", finalBills[highestIndex]);
-    printf("======================================\n");
-}
-
 int main() {
+    loadBedStatusFromFile();
     int choice;
     do {
         printf("\n=== SMART HOSPITAL & RESOURCE ALLOCATION SYSTEM ===\n");
         printf("1. Register Patient\n");
-        printf("2. View Highest-Paying Patient\n");
+        printf("2. Save Bed Status to File\n");
         printf("3. Exit\n");
         printf("Enter Choice: ");
         scanf("%d", &choice);
@@ -139,7 +144,7 @@ int main() {
         if (choice == 1) {
             registerPatient();
         } else if (choice == 2) {
-            displayHighestPayingPatient();
+            saveBedStatusToFile();
         }
     } while (choice != 3);
 
