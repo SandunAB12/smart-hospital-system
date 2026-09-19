@@ -49,7 +49,7 @@ void loadBedStatusFromFile() {
 }
 
 void savePatientsToFile() {
-    FILE *fp = fopen("patients.txt", "w");
+FILE *fp = fopen("patient_records.txt", "w");
     if (fp == NULL) return;
     for (int i = 0; i < totalPatients; i++) {
         fprintf(fp, "PAT-%d | Name: %s | Age: %d | Urgency: %d | Bill: LKR %.2f\n",
